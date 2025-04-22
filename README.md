@@ -29,6 +29,8 @@ location / {
 }
 ```
 
+Tip: restart nginx if it doens't work `sudo nginx -s reload`
+
 ## Example program
 
 ```
