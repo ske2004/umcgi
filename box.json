@@ -1,0 +1,13 @@
+{
+	"name": "umcgi-example",
+	"version": "v0.1.0",
+	"author": "",
+	"license": "",
+	"description": "",
+	"readme": "README.md",
+	"dependencies": [
+		"umka"
+	],
+	"include": [
+	]
+}
