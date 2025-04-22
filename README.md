@@ -16,7 +16,7 @@ spawn-fcgi -a 127.0.0.1 -p 9000 -- umcgi.cgi
 
 Put the main file at `cgi-bin/main.um` relative to the cwd of the cgi process.
 
-Route nginx requests to `127.0.0.1:9000`. Go to `/etc/nginx/sites-available/default` and add:
+Route nginx requests to `127.0.0.1:9000`. Go to `/etc/nginx/sites-available/default` and add inside `server` block :
 
 ```
 location / {
