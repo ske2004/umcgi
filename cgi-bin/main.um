@@ -1,6 +1,0 @@
-import "../umcgi/umcgi.um"
-
-fn process*(req: ^umcgi::Request, out: ^umcgi::Response) {
-    out.body = sprintf("<h1>Hello from Umka!</h1> Headers: <pre>%s</pre> <hr> Body: <pre>%s</pre>", req.headers, req.body)
-    out.headers = "HTTP/1.1 200 OK\nContent-Type: text/html"
-}

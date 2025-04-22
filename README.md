@@ -1,28 +1,64 @@
-# Umka "CGI"
+# UmCGI
 
-Umka "CGI" allows you to run Umka code as a "CGI" application.
-(It's not CGI, but same purpose.)
+UmCGI is FastCGI bindings for Umka.
 
 ## Usage
 
 First run `umbox install`, you'll need [umbox](https://umbox.tophat2d.dev) to be installed.
 
-Entry point is in `cgi-bin/main.um`.
+Run `./compile.sh` to compile the program.
 
-You'll need to enable FFI in your `php.ini`.
+Use `spawn-fcgi` to run it as a FastCGI application.
 
-On Windows, install MSVC and run `serve.bat <host>`.
+```
+spawn-fcgi -a 127.0.0.1 -p 9000 -- umcgi.cgi
+```
 
-On Linux, run `serve.sh <host>`.
+Put the main file at `cgi-bin/main.um` relative to the cwd of the cgi process.
 
-## How it works
+Route nginx requests to `127.0.0.1:9000`. Go to `/etc/nginx/sites-available/default` and add:
 
-It works by routing PHP requests to Umka, through C FFI. Very stupid, but it's simpler than setting up a full CGI environment.
+```
+location / {
+    fastcgi_pass 127.0.0.1:9000;
+    fastcgi_param QUERY_STRING    $query_string;
+    fastcgi_param REQUEST_METHOD  $request_method;
+    fastcgi_param CONTENT_TYPE    $content_type;
+    fastcgi_param CONTENT_LENGTH  $content_length;
+    fastcgi_param SCRIPT_FILENAME $request_uri;
+}
+```
 
-## Problems
+## Example program
 
-If you load another PHP file it will show a PHP error.
+```
+import "fcgi.um"
 
-Don't make another PHP file, otherwise the users will be able to navigate to it and possibly cause havoc.
+fn write_string(s: str) {
+    fcgi::FCGI_Write([]uint8([]char(s)))
+}
 
-In the future I'll get rid of PHP and just use C.
+fn read_whole_body(): str {
+    input := []uint8{}
+    for true {
+        c := fcgi::FCGI_GetChar()
+        if c == -1 {
+            break
+        }
+        input = append(input, c)
+    }
+
+    return str([]char(input))
+}
+
+fn get_env(): []str {
+    return fcgi::FCGI_GetEnv(typeptr([]str))
+}
+
+fn main() {
+    write_string("Content-Type: text/html\r\n\r\n")
+    body := read_whole_body()
+    envs := get_env()
+    write_string(sprintf("Body:<pre>%llv</pre><hr>Headers:<pre>%llv</pre>", body, envs))
+}
+```

@@ -1,6 +1,6 @@
 junk
 umbox
-*.umbox
+cgi-bin
 *.dll
 *.so
 *.dylib
@@ -9,3 +9,6 @@ umbox
 *.exp
 *.o
 *.obj
+*.cgi
+fcgiapp.h
+fcgi_stdio.h
