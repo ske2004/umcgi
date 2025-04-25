@@ -4,19 +4,22 @@ UmCGI is FastCGI bindings for Umka.
 
 ## Usage
 
-First run `umbox install`, you'll need [umbox](https://umbox.tophat2d.dev) to be installed.
+You need to have these things installed:
+- [umbox](https://umbox.tophat2d.dev)
+- `libfcgi-dev`
+- `spawn-fcgi`
+- `nginx`
 
-Run `./compile.sh` to compile the program.
-
-Use `spawn-fcgi` to run it as a FastCGI application.
+1. First run `umbox install`
+2. Run `./compile.sh` to compile the program.
+3. Use `spawn-fcgi` to run it as a FastCGI application.
 
 ```
 spawn-fcgi -a 127.0.0.1 -p 9000 -- umcgi.cgi
 ```
 
-Put the main file at `cgi-bin/main.um` relative to the cwd of the cgi process.
-
-Route nginx requests to `127.0.0.1:9000`. Go to `/etc/nginx/sites-available/default` and add inside `server` block :
+4. Put the main file at `cgi-bin/main.um` relative to the cwd of the cgi process.
+5. Route nginx requests to `127.0.0.1:9000`. Go to `/etc/nginx/sites-available/default` and add or edit inside `server` block:
 
 ```
 location / {
@@ -29,7 +32,9 @@ location / {
 }
 ```
 
-Tip: restart nginx if it doens't work `sudo nginx -s reload`
+Tip: restart nginx if it doesn't work `sudo nginx -s reload`
+
+Tip: If that didn't work either, try `sudo service nginx restart`
 
 ## Example program
 
@@ -37,13 +42,13 @@ Tip: restart nginx if it doens't work `sudo nginx -s reload`
 import "fcgi.um"
 
 fn write_string(s: str) {
-    fcgi::FCGI_Write([]uint8([]char(s)))
+    fcgi::write([]uint8(s))
 }
 
 fn read_whole_body(): str {
     input := []uint8{}
     for true {
-        c := fcgi::FCGI_GetChar()
+        c := fcgi::getchar()
         if c == -1 {
             break
         }
@@ -54,7 +59,7 @@ fn read_whole_body(): str {
 }
 
 fn get_env(): []str {
-    return fcgi::FCGI_GetEnv(typeptr([]str))
+    return fcgi::getenv()
 }
 
 fn main() {

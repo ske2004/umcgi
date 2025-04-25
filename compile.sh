@@ -1,1 +1,1 @@
-gcc umcgi.c -lfcgi umbox/umka/libumka_static_linux.a -lm -lc -o umcgi.cgi
+gcc umcgi.c umbox/umka/libumka_static_linux.a -lm -lc -ldl -lfcgi -o umcgi.cgi
