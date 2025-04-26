@@ -36,6 +36,17 @@ Tip: restart nginx if it doesn't work `sudo nginx -s reload`
 
 Tip: If that didn't work either, try `sudo service nginx restart`
 
+## API
+
+It's very basic currently, you can get the headers and fastcgi_params through `getenv`. You can read the body character by character with `getchar` and write chunks of data with `write`.
+
+```
+fn write*(data: []uint8): uint
+fn getchar*(): int
+fn getenv*(): []str
+```
+
+
 ## Example program
 
 ```
