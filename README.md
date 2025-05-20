@@ -38,14 +38,18 @@ Tip: If that didn't work either, try `sudo service nginx restart`
 
 ## API
 
-It's very basic currently, you can get the headers and fastcgi_params through `getenv`. You can read the body character by character with `getchar` and write chunks of data with `write`.
+It's currently basic, you can get the headers and fastcgi_params through `getenv`. You can read the whole body with `getbody` and write chunks of data with `write`.
 
-```
+```rs
+// Writes output to response boody
 fn write*(data: []uint8): uint
+// Reads one character from request body, -1 for EOF
 fn getchar*(): int
+// Returns headers and Nginx parameters
 fn getenv*(): []str
+// Reads whole request body, affected by `getchar`, and returns empty array on subsequent calls.
+fn getbody*(): []uint8 
 ```
-
 
 ## Example program
 
@@ -56,27 +60,10 @@ fn write_string(s: str) {
     fcgi::write([]uint8(s))
 }
 
-fn read_whole_body(): str {
-    input := []uint8{}
-    for true {
-        c := fcgi::getchar()
-        if c == -1 {
-            break
-        }
-        input = append(input, c)
-    }
-
-    return str([]char(input))
-}
-
-fn get_env(): []str {
-    return fcgi::getenv()
-}
-
 fn main() {
     write_string("Content-Type: text/html\r\n\r\n")
-    body := read_whole_body()
-    envs := get_env()
+    body := str(fcgi::getbody())
+    envs := fcgi::getenv()
     write_string(sprintf("Body:<pre>%llv</pre><hr>Headers:<pre>%llv</pre>", body, envs))
 }
 ```
