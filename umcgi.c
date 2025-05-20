@@ -2,6 +2,7 @@
 #include "umbox/umka/umka_api.h"
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 
 #define TRY(cond) if (cond) { _print_error(umka); umkaFree(umka); return; }
 
@@ -9,6 +10,7 @@ struct bump
 {
     uint8_t *data;
     size_t len;
+    size_t comm;
     size_t cap;
 };
 
@@ -35,6 +37,13 @@ static uint8_t *bump_alloc(struct bump *buf, size_t len)
     uint8_t *ptr = buf->data + buf->len;
     buf->len += len;
     return ptr;
+}
+
+static void bump_commit(struct bump *buf, size_t len)
+{
+    buf->comm += len;
+    assert(buf->comm <= buf->len);
+    buf->len = buf->comm;
 }
 
 static void bump_free(struct bump *buf)
@@ -72,16 +81,15 @@ uint8_t *_get_chunk(size_t *len)
     struct bump buf = { 0 };
     bump_init(&buf);
     size_t readsz = 4096;
-    size_t size = 0;
 
     while (true)
     {
         uint8_t *ptr = bump_alloc(&buf, readsz);
-        size_t n = fread(ptr, 1, readsz, stdin);
-        size += n;
-        if (n < readsz || feof(stdin))
+        bump_commit(&buf, fread(ptr, 1, readsz, stdin));
+        
+        if (feof(stdin))
         {
-            *len = size;
+            *len = buf.comm;
             return buf.data;
         }
 
@@ -91,10 +99,11 @@ uint8_t *_get_chunk(size_t *len)
             *len = 0;
             return NULL;
         }
+
+        readsz *= 2;
     }
 
-    *len = size;
-    return buf.data;
+    assert(0 && "unreachable");
 }
 
 void _umka_fcgi_write(UmkaStackSlot *params, UmkaStackSlot *result)
@@ -154,7 +163,7 @@ void _umka_fcgi_getenv(UmkaStackSlot *params, UmkaStackSlot *result)
 void _umka_run()
 {
     void *umka = umkaAlloc();
-    TRY(!umkaInit(umka, "cgi-bin/main.um", NULL, 2048, NULL, 0, NULL, true, true, NULL));
+    TRY(!umkaInit(umka, "cgi-bin/main.um", NULL, 1<<14, NULL, 0, NULL, true, true, NULL));
     TRY(!umkaAddFunc(umka, "fcgi_write", _umka_fcgi_write));
     TRY(!umkaAddFunc(umka, "fcgi_getchar", _umka_fcgi_getchar));
     TRY(!umkaAddFunc(umka, "fcgi_getenv", _umka_fcgi_getenv));
